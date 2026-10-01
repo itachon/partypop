@@ -2,8 +2,9 @@
 import { PGlite } from '@electric-sql/pglite'
 import fs from 'node:fs'
 import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 
-const MIG = path.join(path.dirname(new URL(import.meta.url).pathname), '../migrations')
+const MIG = path.join(path.dirname(fileURLToPath(import.meta.url)), '../migrations')
 const db = new PGlite()
 
 // ---- Stub mínimo de Supabase: roles, auth, storage, grants por defecto ----
@@ -163,6 +164,9 @@ check('no puede cambiar regalo', /DEADLINE_PASSED/.test(await svcErr('select pub
 check('no puede liberar regalo', /DEADLINE_PASSED/.test(await svcErr('select public.guest_release_gift($1)', [tJuan])))
 check('sí puede seguir viendo la lista', (await glist(tJuan)).length === 3)
 check('deadline posterior al evento rechazado', /rsvp_before_event/.test(await err('authenticated', A, `insert into public.parties (name, event_at, rsvp_deadline) values ('x', now(), now() + interval '1 day')`)))
+
+check('link de compra javascript: rechazado', /gifts_purchase_url_http/.test(await err('authenticated', A, `update public.gifts set purchase_url = 'javascript:alert(1)' where party_id=$1`, [party.id])))
+check('link de compra https aceptado', !(await err('authenticated', A, `update public.gifts set purchase_url = 'https://tienda.cl/lego' where party_id=$1`, [party.id])))
 
 console.log('\nStorage')
 check('B sube foto a su fiesta', !(await err('authenticated', B, `insert into storage.objects (bucket_id, name) values ('gift-photos', $1)`, [`${party.id}/lego.webp`])))

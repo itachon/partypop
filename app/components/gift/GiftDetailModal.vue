@@ -19,6 +19,11 @@ const emit = defineEmits<{ reserve: [gift: GuestGift], release: [] }>()
 const open = defineModel<boolean>('open', { default: false })
 
 const takenByOther = computed(() => !!props.gift?.reserved && !props.gift.mine)
+// Segunda barrera (la base ya lo exige): nunca renderizar links que no sean http(s)
+const purchaseUrl = computed(() => {
+  const url = props.gift?.purchase_url
+  return url && /^https?:\/\//i.test(url) ? url : null
+})
 </script>
 
 <template>
@@ -52,8 +57,8 @@ const takenByOther = computed(() => !!props.gift?.reserved && !props.gift.mine)
       </p>
 
       <UButton
-        v-if="gift.purchase_url"
-        :to="gift.purchase_url"
+        v-if="purchaseUrl"
+        :to="purchaseUrl"
         target="_blank"
         rel="noopener noreferrer"
         class="mt-4 px-0"
